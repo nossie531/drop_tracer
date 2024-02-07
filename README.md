@@ -41,3 +41,9 @@ impl Chain {
     }
 }
 ```
+
+## What's new.
+
+v0.1.1
+
+* `DropItem` implement `Debug` trait.

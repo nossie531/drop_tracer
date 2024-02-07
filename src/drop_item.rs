@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
 
 /// Items to monitor drops.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DropItem {
     /// The number of items not dropped.
     count: Arc<AtomicUsize>,
