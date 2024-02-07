@@ -1,0 +1,13 @@
+[package]
+name = "drop_tracer"
+version = "0.1.0"
+authors = ["Nossie531"]
+edition = "2021"
+description = "Simple memory leak detector."
+repository = "https://github.com/nossie531/drop_tracer"
+license = "MIT OR Apache-2.0"
+keywords = ["test", "memory-leak"]
+categories = ["memory-management", "development-tools::testing"]
+
+[dev-dependencies]
+test_panic = "0.3"
