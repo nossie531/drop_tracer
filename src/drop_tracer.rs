@@ -1,9 +1,8 @@
 //! Provider of [`DropTracer`].
 
-use super::drop_item::DropItem;
-use super::LeakError;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use crate::{DropItem, LeakError};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Memory leak detector.
 ///
@@ -16,7 +15,7 @@ pub struct DropTracer {
 }
 
 impl DropTracer {
-    /// Create new instance.
+    /// Creates a new instance.
     pub fn new() -> Self {
         Self {
             count: Default::default(),

@@ -1,8 +1,8 @@
 mod for_test;
 
-use drop_tracer::DropTracer;
-use for_test::{exec_leak, exec_no_leak};
-use test_panic::test_panic;
+use crate::for_test::{exec_leak, exec_no_leak};
+use drop_tracer::prelude::*;
+use test_panic::prelude::*;
 
 #[test]
 fn new() {

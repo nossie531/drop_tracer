@@ -10,7 +10,7 @@ pub struct LeakError {
 }
 
 impl LeakError {
-    /// Create a new value.
+    /// Creates a new instance.
     pub fn new(count: usize) -> Self {
         LeakError { count }
     }

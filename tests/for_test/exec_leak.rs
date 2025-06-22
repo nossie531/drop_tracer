@@ -1,4 +1,4 @@
-use super::Chain;
+use crate::for_test::Chain;
 use drop_tracer::DropTracer;
 
 pub fn exec_no_leak(t: &mut DropTracer) {

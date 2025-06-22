@@ -18,7 +18,7 @@ This crate has three main entry points.
 # use std::cell::RefCell;
 # use std::rc::Rc;
 # use drop_tracer::DropItem;
-# use drop_tracer::DropTracer;
+# use drop_tracer::prelude::*;
 let result = DropTracer::try_drop(|t| {
     let x = Chain::new(t.new_item());
     let y = Chain::new(t.new_item());
@@ -41,6 +41,10 @@ impl Chain {
 }
 ```
 */
+
+#![warn(missing_docs)]
+
+pub mod prelude;
 
 mod drop_item;
 mod drop_tracer;

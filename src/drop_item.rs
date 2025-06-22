@@ -1,7 +1,7 @@
 //! Provider of [`DropItem`].
 
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 /// Items to monitor drops.
 #[derive(Default, Debug)]

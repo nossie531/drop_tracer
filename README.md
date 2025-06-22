@@ -44,6 +44,13 @@ impl Chain {
 
 ## What's new.
 
+v0.2.0
+
+* Rust edition is updated to 2024.
+* Add `prelude` module (Although this crate is very small).
+* Polish documentations.
+* Minor refactoring.
+
 v0.1.1
 
 * `DropItem` implement `Debug` trait.
