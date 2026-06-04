@@ -1,47 +1,91 @@
-drop_tracer
-===
+# drop_tracer
 
-Simple memory leak detector.
+Instance drop tracer.
 
 *The author of this crate is not good at English.*  
 *Forgive me if the document is hard to read.*
 
 ## What is this?
 
-This crate performs simple memory leak detection. This is intended to check
-local memory leaks in small crates. This is simple to use, just generate
-items for tracing, embed them in target to be managed, and check later to see
-if they have been dropped.
+This crate helps to trace the execution of `Drop::drop`.\
+It is primarily intended for use in testing.
 
-(`#[global_allocator]` attribute is not necessary).
+## Core items
+
+The core item of this crate is `DropTracer`.\
+`DropTracer` creates tracing values by `trace` method.\
+These values' allocations and drops are logged by the tracer.
 
 ## Examples
 
-Example using `try_drop` (see manual for other options).
+### By manual
+
+Following code trace values in vector.
 
 ```rust
-let result = DropTracer::try_drop(|t| {
-    let x = Chain::new(t.new_item());
-    let y = Chain::new(t.new_item());
-    x.borrow_mut().link = Some(y.clone());
-    y.borrow_mut().link = Some(x.clone());
+use drop_tracer::prelude::*;
+
+// Arrange tracer and data structure.
+let tracer = &DropTracer::new();
+let data = &mut Vec::new();
+
+// Creates values for trace.
+let val1 = tracer.trace(1);
+let val2 = tracer.trace(2);
+let val3 = tracer.trace(3);
+
+// Save tags for detail trace.
+let tag1 = TraceVal::tag(&val1);
+let tag2 = TraceVal::tag(&val2);
+let tag3 = TraceVal::tag(&val3);
+
+// Do some action.
+data.extend([val1, val2, val3]);
+data.remove(0);
+
+// Veryfy tracer.
+let logs = tracer.logs();
+assert_eq!(tracer.living_count(), 2);
+assert!(logs.iter().eq([
+    &TraceLog::new(&tag1, true),
+    &TraceLog::new(&tag2, true),
+    &TraceLog::new(&tag3, true),
+    &TraceLog::new(&tag1, false),
+]));
+```
+
+### By helper
+
+`drop_test` is helper for local memory leak check.\
+Following code detects memory leak by cyclic `Rc`.
+
+```rust
+use std::cell::RefCell;
+use std::rc::Rc;
+use drop_tracer::prelude::*;
+
+let result = drop_test::try_run(|t| {
+    let x = RcChain::new(t.trace("item1"));
+    let y = RcChain::new(t.trace("item2"));
+    x.borrow_mut().next = Some(y.clone());
+    y.borrow_mut().next = Some(x.clone());
 });
 
 assert_eq!(result.unwrap_err().count(), 2);
 
-struct Chain {
-    link: Option<Rc<RefCell<Self>>>,
-    _d: DropItem,
+struct RcChain {
+    next: Option<Rc<RefCell<Self>>>,
+    _val: TraceVal<&'static str>,
 }
 
-impl Chain {
-    pub fn new(d: DropItem) -> Rc<RefCell<Self>> {
-        let result = Self { link: None, _d: d };
+impl RcChain {
+    pub fn new(val: TraceVal<&'static str>) -> Rc<RefCell<Self>> {
+        let result = Self { next: None, _val: val };
         Rc::new(RefCell::new(result))
     }
 }
 ```
 
-## Versions
+## History
 
 See [CHANGELOG](CHANGELOG.md).

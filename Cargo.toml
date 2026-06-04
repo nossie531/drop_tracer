@@ -1,13 +1,15 @@
 [package]
 name = "drop_tracer"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Nossie531"]
 edition = "2024"
-description = "Simple memory leak detector."
+description = "Instance drop tracer."
 repository = "https://github.com/nossie531/drop_tracer"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 keywords = ["test", "memory-leak"]
 categories = ["memory-management", "development-tools::testing"]
 
 [dev-dependencies]
-test_panic = "0.4"
+rand = "0.10"
+rand_pcg = "0.10"
+test_panic = "0.8"
