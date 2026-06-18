@@ -1,6 +1,6 @@
 //! Provider of [`TraceVal`].
 
-use crate::errors::TracerBorrowedError;
+use crate::errors::TraceError;
 use crate::prelude::*;
 use crate::*;
 use std::cell::RefCell;
@@ -83,7 +83,7 @@ impl<T> TraceVal<T> {
 
         // Logs the new value to the tracer.
         let tracer = &value.body();
-        tracer.borrow_mut().log(&self, true);
+        tracer.borrow_mut().log(&self, true).unwrap();
 
         // Returns the new instance.
         self.tracer = Some(Arc::downgrade(tracer));
@@ -91,7 +91,7 @@ impl<T> TraceVal<T> {
     }
 
     /// Logs the allocation or drop of this value.
-    fn log(&self, alloc: bool) -> Result<(), TracerBorrowedError> {
+    fn log(&self, alloc: bool) -> Result<(), TraceError> {
         let Some(tracer) = self.tracer.as_ref() else {
             return Ok(());
         };
@@ -101,11 +101,10 @@ impl<T> TraceVal<T> {
         };
 
         let Some(ref mut tracer) = tracer.try_borrow_mut().ok() else {
-            return Err(TracerBorrowedError::new());
+            return Err(TraceError::TracerBorrowed);
         };
 
-        tracer.log(self, alloc);
-        Ok(())
+        tracer.log(self, alloc)
     }
 }
 
@@ -152,8 +151,8 @@ impl<T> Drop for TraceVal<T> {
     ///
     /// # Panics
     ///
-    /// Panics if related tracer is borrowed already (however, if
-    /// panic has already occurred, doubl-panic will not occur).
+    /// Panics if related tracer is borrowed already or double drop is detected
+    /// (however, if panic has already occurred, doubl panic will not occur).
     fn drop(&mut self) {
         let log_result = self.log(false);
         if let Err(error) = log_result

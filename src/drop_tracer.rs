@@ -1,5 +1,6 @@
 //! Provider of [`DropTracer`].
 
+use crate::errors::*;
 use crate::parts::*;
 use crate::*;
 use std::cell::{Ref, RefCell};
@@ -7,7 +8,7 @@ use std::collections::BTreeMap;
 use std::sync::Arc;
 
 /// Drop tracer.
-/// 
+///
 /// See the [crate level documentation](crate) for more details.
 #[derive(Clone, Debug, Default)]
 pub struct DropTracer(Arc<RefCell<DropTracerBody>>);
@@ -157,10 +158,20 @@ impl DropTracer {
 
 impl DropTracerBody {
     /// Logs allocate or drop operation about given value.
-    pub(crate) fn log<T>(&mut self, val: &TraceVal<T>, alloc: bool) {
+    pub(crate) fn log<T>(&mut self, val: &TraceVal<T>, alloc: bool) -> Result<(), TraceError> {
         let tag = TraceVal::tag(val);
+        let state = self.map.get(&tag).copied();
+
+        match (alloc, state) {
+            (true, Some(_)) => unreachable!(),
+            (false, None) => unreachable!(),
+            (false, Some(false)) => return Err(TraceError::DoubleDrop),
+            _ => {}
+        }
+
         self.logs.push(TraceLog::new_by_val(val, alloc));
         self.map.insert(tag, alloc);
         self.living_count = util::offset(self.living_count, 1, alloc);
+        Ok(())
     }
 }

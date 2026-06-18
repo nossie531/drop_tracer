@@ -1,6 +1,6 @@
 use crate::for_test::*;
 use drop_tracer::prelude::*;
-use std::{cmp::Ordering, mem, ops::Deref};
+use std::{cmp::Ordering, mem, ops::Deref, ptr};
 use test_panic::prelude::*;
 
 #[test]
@@ -83,6 +83,7 @@ fn clone() {
 fn drop() {
     when_normal();
     when_reading_tracer();
+    when_double_drop();
 
     fn when_normal() {
         // Arrange.
@@ -107,6 +108,18 @@ fn drop() {
         assert!(result.is_panic());
         // Clean up.
         mem::drop(logs);
+    }
+
+    fn when_double_drop() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = builder.take();
+        let mut val = target.trace(ts::SOME);
+        unsafe { ptr::drop_in_place((&mut val) as *mut _) }
+        // Act.
+        let result = test_panic(|| mem::drop(val));
+        // Assert.
+        assert!(result.is_panic());
     }
 }
 

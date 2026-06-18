@@ -92,6 +92,6 @@ pub mod prelude;
 pub use drop_tracer::*;
 
 pub(crate) mod msg;
-pub (crate) mod util;
+pub(crate) mod util;
 
 mod drop_tracer;
