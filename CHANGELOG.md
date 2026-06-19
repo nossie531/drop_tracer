@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-No items.
+### Changed
+
+- `DropTracer` supports multithreading ([#1][issue1])
 
 ## [0.4.0] - 2026-06-19
 
@@ -58,3 +60,4 @@ No items.
 [0.2.0]: https://github.com/nossie531/drop_tracer/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/nossie531/drop_tracer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nossie531/drop_tracer/releases/tag/v0.1.0
+[issue1]: https://github.com/nossie531/drop_tracer/issues/1

@@ -68,7 +68,7 @@ fn clone() {
     fn when_reading_tracer() {
         // Arrange.
         let tracer = &mut DropTracer::new();
-        let target = tracer.trace(ts::SOME);
+        let target = &tracer.trace(ts::SOME);
         let logs = tracer.logs();
         // Act.
         let result = test_panic(|| target.clone());

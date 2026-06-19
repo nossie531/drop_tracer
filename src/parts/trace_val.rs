@@ -3,7 +3,7 @@
 use crate::errors::TraceError;
 use crate::prelude::*;
 use crate::*;
-use std::cell::RefCell;
+use parking_lot::RwLock;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
@@ -32,7 +32,7 @@ pub struct TraceVal<T> {
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
-    tracer: Option<Weak<RefCell<DropTracerBody>>>,
+    tracer: Option<Weak<RwLock<DropTracerBody>>>,
 }
 
 impl<T> TraceVal<T> {
@@ -78,16 +78,10 @@ impl<T> TraceVal<T> {
     }
 
     /// Creates a new instance with new tracer.
-    pub(crate) fn with_tracer(mut self, value: &DropTracer) -> Self {
+    pub(crate) fn with_tracer(mut self, value: &DropTracer) -> Result<Self, TraceError> {
         debug_assert!(self.tracer.is_none());
-
-        // Logs the new value to the tracer.
-        let tracer = &value.body();
-        tracer.borrow_mut().log(&self, true).unwrap();
-
-        // Returns the new instance.
-        self.tracer = Some(Arc::downgrade(tracer));
-        self
+        self.tracer = Some(Arc::downgrade(&value.body()));
+        self.log(true).map(|_| self)
     }
 
     /// Logs the allocation or drop of this value.
@@ -100,8 +94,8 @@ impl<T> TraceVal<T> {
             return Ok(());
         };
 
-        let Some(ref mut tracer) = tracer.try_borrow_mut().ok() else {
-            return Err(TraceError::TracerBorrowed);
+        let Some(ref mut tracer) = tracer.try_write() else {
+            return Err(TraceError::TracerReading);
         };
 
         tracer.log(self, alloc)

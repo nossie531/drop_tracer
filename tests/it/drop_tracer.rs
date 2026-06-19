@@ -1,5 +1,6 @@
 use crate::for_test::*;
 use drop_tracer::prelude::*;
+use test_panic::prelude::*;
 
 #[test]
 fn new() {
@@ -45,11 +46,29 @@ fn status() {
 
 #[test]
 fn trace() {
-    // Arrange.
-    let builder = &mut ts::TracerBuilder::new();
-    let target = builder.take();
-    // Act.
-    let result = target.trace(ts::SOME);
-    // Assert.
-    assert_eq!(*result, ts::SOME);
+    when_normal();
+    when_reading_tracer();
+
+    fn when_normal() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new();
+        let target = builder.take();
+        // Act.
+        let result = target.trace(ts::SOME);
+        // Assert.
+        assert_eq!(*result, ts::SOME);
+    }
+
+    fn when_reading_tracer() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new();
+        let target = builder.take();
+        let logs = target.logs();
+        // Act.
+        let result = test_panic(|| target.trace(ts::SOME));
+        // Assert.
+        assert!(result.is_panic());
+        // Clean up.
+        std::mem::drop(logs);
+    }
 }

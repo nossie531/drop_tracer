@@ -3,7 +3,9 @@
 use crate::errors::*;
 use crate::parts::*;
 use crate::*;
-use std::cell::{Ref, RefCell};
+use parking_lot::MappedRwLockReadGuard;
+use parking_lot::RwLock;
+use parking_lot::RwLockReadGuard;
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -11,7 +13,7 @@ use std::sync::Arc;
 ///
 /// See the [crate level documentation](crate) for more details.
 #[derive(Clone, Debug, Default)]
-pub struct DropTracer(Arc<RefCell<DropTracerBody>>);
+pub struct DropTracer(Arc<RwLock<DropTracerBody>>);
 
 /// Body of drop tracer.
 #[derive(Debug, Default)]
@@ -63,15 +65,15 @@ impl DropTracer {
     /// assert_eq!(tracer.living_count(), 0);
     #[must_use]
     pub fn living_count(&self) -> usize {
-        self.0.borrow().living_count
+        self.0.read().living_count
     }
 
     /// Returns tracing logs.
     ///
-    /// # Dynamic borrowing
+    /// # Locking
     ///
-    /// Returned value borrows tracer dynamically. Therefore, while
-    /// keeping it, actions that access to the tracer will cause panic.
+    /// Returned value locks tracer dynamically. Therefore, while
+    /// keeping it, actions that update the tracer will cause panic.
     /// See [`TraceVal::clone`] or [`TraceVal::drop`] for more details.
     ///
     /// # Examples
@@ -94,17 +96,16 @@ impl DropTracer {
     /// assert_eq!(logs[3], &TraceLog::new(&tags[0], false));
     /// assert_eq!(logs[4], &TraceLog::new(&tags[2], false));
     /// ```
-    #[must_use]
-    pub fn logs(&self) -> Ref<'_, impl LogList> {
-        Ref::map(self.0.borrow(), |x| &x.logs)
+    pub fn logs(&self) -> MappedRwLockReadGuard<'_, impl LogList> {
+        RwLockReadGuard::map(self.0.read(), |x| &x.logs)
     }
 
     /// Returns states of tracing values.
     ///
-    /// # Dynamic borrowing
+    /// # Locking
     ///
-    /// Returned value borrows tracer dynamically. Therefore, while
-    /// keeping it, actions that access to the tracer will cause panic.
+    /// Returned value locks tracer dynamically. Therefore, while
+    /// keeping it, actions that update the tracer will cause panic.
     /// See [`TraceVal::clone`] or [`TraceVal::drop`] for more details.
     ///
     /// # Examples
@@ -125,12 +126,15 @@ impl DropTracer {
     /// assert_eq!(map.get(&tags[2]), Some(false));
     /// assert_eq!(map.get(&TraceTag::new()), None);
     /// ```
-    #[must_use]
-    pub fn states(&self) -> Ref<'_, impl StatusMap> {
-        Ref::map(self.0.borrow(), |x| &x.map)
+    pub fn states(&self) -> MappedRwLockReadGuard<'_, impl StatusMap> {
+        RwLockReadGuard::map(self.0.read(), |x| &x.map)
     }
 
     /// Returns tracing wrapper for given value.
+    ///
+    /// # Panics
+    ///
+    /// Panics if tracer is now reading.
     ///
     /// # Examples
     ///
@@ -147,11 +151,11 @@ impl DropTracer {
     /// assert_eq!(tracer.living_count(), 0);
     /// ```
     pub fn trace<T>(&self, value: T) -> TraceVal<T> {
-        TraceVal::new(value).with_tracer(self)
+        TraceVal::new(value).with_tracer(self).unwrap()
     }
 
     /// Returns body of this instance.
-    pub(crate) fn body(&self) -> Arc<RefCell<DropTracerBody>> {
+    pub(crate) fn body(&self) -> Arc<RwLock<DropTracerBody>> {
         self.0.clone()
     }
 }

@@ -7,7 +7,9 @@ use std::fmt::{self, Display, Formatter};
 /// The error type for memory leak.
 #[derive(Debug)]
 pub(crate) enum TraceError {
-    TracerBorrowed,
+    /// Tracer write is detected when reading.
+    TracerReading,
+    /// Double drop is detected.
     DoubleDrop,
 }
 
@@ -26,7 +28,7 @@ impl Display for TraceError {
             f,
             "{}",
             match self {
-                TraceError::TracerBorrowed => msg::TRACER_BORROWED,
+                TraceError::TracerReading => msg::TRACER_BORROWED,
                 TraceError::DoubleDrop => msg::DOUBLE_DROPPED,
             }
         )

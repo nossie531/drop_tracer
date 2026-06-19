@@ -9,6 +9,9 @@ license = "MIT"
 keywords = ["test", "memory-leak"]
 categories = ["memory-management", "development-tools::testing"]
 
+[dependencies]
+parking_lot = "0.12"
+
 [dev-dependencies]
 rand = "0.10"
 rand_pcg = "0.10"
