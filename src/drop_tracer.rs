@@ -173,6 +173,12 @@ impl DropTracerBody {
             _ => {}
         }
 
+        if alloc {
+            let numof_val = self.map.len() + 1;
+            self.logs
+                .reserve((numof_val * 2).saturating_sub(self.logs.capacity()));
+        }
+
         self.logs.push(TraceLog::new_by_val(val, alloc));
         self.map.insert(tag, alloc);
         self.living_count = util::offset(self.living_count, 1, alloc);

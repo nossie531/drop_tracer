@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Double panic on drop of `TestVal` ([#2][issue2])
+
 ### Changed
 
 - `DropTracer` supports multithreading ([#1][issue1])
@@ -61,3 +65,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.1.1]: https://github.com/nossie531/drop_tracer/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/nossie531/drop_tracer/releases/tag/v0.1.0
 [issue1]: https://github.com/nossie531/drop_tracer/issues/1
+[issue2]: https://github.com/nossie531/drop_tracer/issues/2
