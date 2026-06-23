@@ -8,6 +8,7 @@ use parking_lot::RwLock;
 use parking_lot::RwLockReadGuard;
 use std::collections::BTreeMap;
 use std::sync::Arc;
+use std::sync::Weak;
 
 /// Drop tracer.
 ///
@@ -154,9 +155,9 @@ impl DropTracer {
         TraceVal::new(value).with_tracer(self).unwrap()
     }
 
-    /// Returns body of this instance.
-    pub(crate) fn body(&self) -> Arc<RwLock<DropTracerBody>> {
-        self.0.clone()
+    /// Returns weak reference.
+    pub(crate) fn weak(&self) -> Weak<RwLock<DropTracerBody>> {
+        Arc::downgrade(&self.0)
     }
 }
 

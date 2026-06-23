@@ -7,7 +7,7 @@ use parking_lot::RwLock;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
-use std::sync::{Arc, Weak};
+use std::sync::Weak;
 use std::thread;
 
 /// Tracing value wrapper.
@@ -80,7 +80,7 @@ impl<T> TraceVal<T> {
     /// Creates a new instance with new tracer.
     pub(crate) fn with_tracer(mut self, value: &DropTracer) -> Result<Self, TraceError> {
         debug_assert!(self.tracer.is_none());
-        self.tracer = Some(Arc::downgrade(&value.body()));
+        self.tracer = Some(value.weak());
         self.log(true).map(|_| self)
     }
 
