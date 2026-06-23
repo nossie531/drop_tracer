@@ -21,10 +21,11 @@ use std::thread;
 ///
 /// # Tracing
 ///
+/// Logs are recorded if the value is bounded to the tracer.
 /// Values created by [`DropTracer::trace`] are bound to the tracer.
 /// On the other hand, values created by [`new`][Self::new] are not
-/// bound to a tracers. Then, when a value bound to the tracer is
-/// dropped, a log is recorded in the tracer.
+/// bounded to any tracers. These unbounded value can be bounded
+/// with [`DropTracer::trace_on`].
 #[derive(Debug, Default)]
 pub struct TraceVal<T> {
     /// Wrapped value.
@@ -62,7 +63,7 @@ impl<T> TraceVal<T> {
     /// ```
     /// use drop_tracer::prelude::*;
     ///
-    /// let tracer = &mut DropTracer::new();
+    /// let tracer = &DropTracer::new();
     /// let value = tracer.trace("sample");
     /// let tag = TraceVal::tag(&value);
     /// drop(value);
@@ -77,16 +78,25 @@ impl<T> TraceVal<T> {
         this.tag.clone()
     }
 
-    /// Creates a new instance with new tracer.
-    pub(crate) fn with_tracer(mut self, value: &DropTracer) -> Result<Self, TraceError> {
-        debug_assert!(self.tracer.is_none());
-        self.tracer = Some(value.weak());
-        self.log(true).map(|_| self)
+    /// Returns the tracer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let tracer = &DropTracer::new();
+    /// let value = tracer.trace("sample");
+    /// assert_eq!(value.tracer().as_ref(), Some(tracer));
+    /// ```
+    #[must_use]
+    pub fn tracer(&self) -> Option<DropTracer> {
+        Some(DropTracer::from_arc(&self.tracer.as_ref()?.upgrade()?))
     }
 
-    /// Returns tracer.
-    fn tracer(&self) -> Option<DropTracer> {
-        Some(DropTracer::from_arc(&self.tracer.as_ref()?.upgrade()?))
+    /// Sets the tracer.
+    pub(crate) fn set_tracer(&mut self, value: &DropTracer) {
+        self.tracer = Some(value.weak());
     }
 
     /// Logs the operation about this value.

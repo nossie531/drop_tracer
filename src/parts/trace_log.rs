@@ -84,7 +84,7 @@ impl TraceLog {
     /// Returns `true` if this log is about cloned value.
     ///
     /// This is shorthand of [`tag`] and [`TraceTag::for_clone`].
-    /// 
+    ///
     /// [`tag`]: Self::tag
     ///
     /// # Examples

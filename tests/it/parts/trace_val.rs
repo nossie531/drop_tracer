@@ -1,6 +1,8 @@
 use crate::for_test::*;
 use drop_tracer::prelude::*;
-use std::{cmp::Ordering, mem, ops::Deref, ptr};
+use std::cmp::Ordering;
+use std::ops::Deref;
+use std::{mem, ptr};
 use test_panic::prelude::*;
 
 #[test]
@@ -22,6 +24,17 @@ fn tag() {
     assert_eq!(result1, TraceVal::tag(&target1));
     assert_eq!(result2, TraceVal::tag(&target2));
     assert_ne!(result1, result2);
+}
+
+#[test]
+fn tracer() {
+    // Arrange.
+    let tracer = &DropTracer::new();
+    let target = &tracer.trace(ts::SOME);
+    // Act.
+    let result = target.tracer();
+    // Assert.
+    assert_eq!(result.as_ref(), Some(tracer));
 }
 
 #[test]

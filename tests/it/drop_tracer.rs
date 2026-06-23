@@ -13,7 +13,7 @@ fn new() {
 fn living_count() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = builder.take();
+    let target = &builder.take();
     // Act.
     let result = target.living_count();
     // Assert.
@@ -24,7 +24,7 @@ fn living_count() {
 fn logs() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = builder.take();
+    let target = &builder.take();
     // Act.
     let result = target.logs();
     // Assert.
@@ -35,7 +35,7 @@ fn logs() {
 fn states() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = builder.take();
+    let target = &builder.take();
     // Act.
     let result = target.states();
     // Assert.
@@ -51,18 +51,23 @@ fn trace() {
 
     fn when_normal() {
         // Arrange.
-        let builder = &mut ts::TracerBuilder::new();
-        let target = builder.take();
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
         // Act.
         let result = target.trace(ts::SOME);
         // Assert.
+        let new_log = TraceLog::new(&TraceVal::tag(&result), true);
+        let logs_old = builder.expected_logs().iter().cloned();
+        let logs_asis = &Vec::from_iter(target.logs().iter().cloned());
+        let logs_tobe = &Vec::from_iter(logs_old.chain([new_log]));
         assert_eq!(*result, ts::SOME);
+        assert_eq!(logs_asis, logs_tobe);
     }
 
     fn when_reading_tracer() {
         // Arrange.
-        let builder = &mut ts::TracerBuilder::new();
-        let target = builder.take();
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
         let logs = target.logs();
         // Act.
         let result = test_panic(|| target.trace(ts::SOME));
@@ -70,5 +75,69 @@ fn trace() {
         assert!(result.is_panic());
         // Clean up.
         std::mem::drop(logs);
+    }
+}
+
+#[test]
+fn trace_on() {
+    when_normal();
+    when_reading_tracer();
+    when_dup();
+    when_value_of_others();
+
+    fn when_normal() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
+        let value = &mut TraceVal::new(ts::SOME);
+        // Act.
+        target.trace_on(value);
+        // Assert.
+        let new_log = TraceLog::new(&TraceVal::tag(&value), true);
+        let logs_old = builder.expected_logs().iter().cloned();
+        let logs_asis = &Vec::from_iter(target.logs().iter().cloned());
+        let logs_tobe = &Vec::from_iter(logs_old.chain([new_log]));
+        assert_eq!(logs_asis, logs_tobe);
+    }
+
+    fn when_reading_tracer() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
+        let logs = target.logs();
+        // Act.
+        let result = test_panic(|| target.trace_on(&mut TraceVal::new(ts::SOME)));
+        // Assert.
+        assert!(result.is_panic());
+        // Clean up.
+        std::mem::drop(logs);
+    }
+
+    fn when_dup() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
+        let value = &mut target.trace(ts::SOME);
+        // Act.
+        target.trace_on(value);
+        // Assert.
+        let new_log = TraceLog::new(&TraceVal::tag(&value), true);
+        let logs_old = builder.expected_logs().iter().cloned();
+        let logs_asis = &Vec::from_iter(target.logs().iter().cloned());
+        let logs_tobe = &Vec::from_iter(logs_old.chain([new_log]));
+        assert_eq!(logs_asis, logs_tobe);
+    }
+
+    fn when_value_of_others() {
+        // Arrange.
+        let builder1 = &mut ts::TracerBuilder::new_normal();
+        let builder2 = &mut ts::TracerBuilder::new_normal();
+        let target = &builder1.take();
+        let other = &builder2.take();
+        let value = &mut other.trace(ts::SOME);
+        // Act.
+        let result = test_panic(|| target.trace_on(value));
+        // Assert.
+        assert!(result.is_panic());
     }
 }

@@ -131,7 +131,11 @@ impl DropTracer {
         RwLockReadGuard::map(self.0.read(), |x| &x.map)
     }
 
-    /// Returns tracing wrapper for given value.
+    /// Traces given new value.
+    ///
+    /// This is shorthand of [`trace_on`] and [`TraceVal::new`].
+    ///
+    /// [`trace_on`]: Self::trace_on
     ///
     /// # Panics
     ///
@@ -152,7 +156,48 @@ impl DropTracer {
     /// assert_eq!(tracer.living_count(), 0);
     /// ```
     pub fn trace<T>(&self, value: T) -> TraceVal<T> {
-        TraceVal::new(value).with_tracer(self).unwrap()
+        let mut value = TraceVal::new(value);
+        self.trace_on(&mut value);
+        value
+    }
+
+    /// Traces given existing value.
+    ///
+    /// if value is already binded this tracer, no-op.
+    ///
+    /// # Panics
+    ///
+    /// Panics if any of the following cases occured.
+    ///
+    /// - Tracer is now reading.
+    /// - Given value is already binded other tracer.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let tracer = &DropTracer::new();
+    /// assert_eq!(tracer.living_count(), 0);
+    ///
+    /// let mut val = TraceVal::new("some");
+    /// tracer.trace_on(&mut val);
+    /// assert_eq!(tracer.living_count(), 1);
+    ///
+    /// drop(val);
+    /// assert_eq!(tracer.living_count(), 0);
+    /// ```
+    pub fn trace_on<T>(&self, value: &mut TraceVal<T>) {
+        if let Some(tracer) = value.tracer() {
+            if &tracer == self {
+                return;
+            } else {
+                panic!("{}", msg::VALUE_BINDED);
+            }
+        }
+
+        value.set_tracer(self);
+        self.log(value, true).unwrap();
     }
 
     /// Creates a new instance from internal data.
@@ -196,5 +241,15 @@ impl DropTracer {
         this.map.insert(tag, alloc);
         this.living_count = util::offset(this.living_count, 1, alloc);
         Ok(())
+    }
+}
+
+impl Eq for DropTracer {
+    // nop.
+}
+
+impl PartialEq for DropTracer {
+    fn eq(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.0, &other.0)
     }
 }
