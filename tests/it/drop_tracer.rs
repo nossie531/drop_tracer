@@ -32,7 +32,7 @@ fn logs() {
 }
 
 #[test]
-fn status() {
+fn states() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
     let target = builder.take();

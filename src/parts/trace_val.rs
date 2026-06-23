@@ -84,21 +84,17 @@ impl<T> TraceVal<T> {
         self.log(true).map(|_| self)
     }
 
-    /// Logs the allocation or drop of this value.
+    /// Returns tracer.
+    fn tracer(&self) -> Option<DropTracer> {
+        Some(DropTracer::from_arc(&self.tracer.as_ref()?.upgrade()?))
+    }
+
+    /// Logs the operation about this value.
     fn log(&self, alloc: bool) -> Result<(), TraceError> {
-        let Some(tracer) = self.tracer.as_ref() else {
-            return Ok(());
-        };
-
-        let Some(tracer) = Weak::upgrade(tracer) else {
-            return Ok(());
-        };
-
-        let Some(ref mut tracer) = tracer.try_write() else {
-            return Err(TraceError::TracerReading);
-        };
-
-        tracer.log(self, alloc)
+        match self.tracer() {
+            None => Ok(()),
+            Some(x) => x.log(self, alloc),
+        }
     }
 }
 

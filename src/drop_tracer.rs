@@ -155,18 +155,29 @@ impl DropTracer {
         TraceVal::new(value).with_tracer(self).unwrap()
     }
 
+    /// Creates a new instance from internal data.
+    pub(crate) fn from_arc(arc: &Arc<RwLock<DropTracerBody>>) -> Self {
+        Self(arc.clone())
+    }
+
     /// Returns weak reference.
     pub(crate) fn weak(&self) -> Weak<RwLock<DropTracerBody>> {
         Arc::downgrade(&self.0)
     }
-}
 
-impl DropTracerBody {
-    /// Logs allocate or drop operation about given value.
-    pub(crate) fn log<T>(&mut self, val: &TraceVal<T>, alloc: bool) -> Result<(), TraceError> {
+    /// Logs operation about given value.
+    pub(crate) fn log<T>(&self, val: &TraceVal<T>, alloc: bool) -> Result<(), TraceError> {
+        // Acquire write lock of self.
+        let Some(ref mut this) = self.0.try_write() else {
+            return Err(TraceError::TracerReading);
+        };
+
+        // Collect current informations.
         let tag = TraceVal::tag(val);
-        let state = self.map.get(&tag).copied();
+        let state = this.map.get(&tag).copied();
+        let capacity = this.logs.capacity();
 
+        // Verify current informations.
         match (alloc, state) {
             (true, Some(_)) => unreachable!(),
             (false, None) => unreachable!(),
@@ -174,15 +185,16 @@ impl DropTracerBody {
             _ => {}
         }
 
+        // Reserve capacity for drop logging in the future.
         if alloc {
-            let numof_val = self.map.len() + 1;
-            self.logs
-                .reserve((numof_val * 2).saturating_sub(self.logs.capacity()));
+            let numof_val = this.map.len() + 1;
+            this.logs.reserve((numof_val * 2).saturating_sub(capacity));
         }
 
-        self.logs.push(TraceLog::new_by_val(val, alloc));
-        self.map.insert(tag, alloc);
-        self.living_count = util::offset(self.living_count, 1, alloc);
+        // Update and logging.
+        this.logs.push(TraceLog::new_by_val(val, alloc));
+        this.map.insert(tag, alloc);
+        this.living_count = util::offset(this.living_count, 1, alloc);
         Ok(())
     }
 }

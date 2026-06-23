@@ -24,6 +24,7 @@ impl TraceLog {
     /// assert_eq!(log.tag(), tag);
     /// assert_eq!(log.is_alloc(), true);
     /// ```
+    #[must_use]
     pub fn new(tag: &TraceTag, alloc: bool) -> Self {
         let tag = tag.clone();
         Self { tag, alloc }
@@ -31,8 +32,7 @@ impl TraceLog {
 
     /// Creates a new instance by trace value.
     ///
-    /// This is shorthand for the combination of
-    /// [`new`](Self::new) and [`TraceVal::tag`].
+    /// This is shorthand of [`new`](Self::new) and [`TraceVal::tag`].
     ///
     /// # Examples
     ///
@@ -46,8 +46,7 @@ impl TraceLog {
     /// ```
     #[must_use]
     pub fn new_by_val<T>(val: &TraceVal<T>, alloc: bool) -> Self {
-        let tag = TraceVal::tag(val);
-        Self { tag, alloc }
+        Self::new(&TraceVal::tag(val), alloc)
     }
 
     /// Returns a reference to trace tag.
@@ -84,8 +83,9 @@ impl TraceLog {
 
     /// Returns `true` if this log is about cloned value.
     ///
-    /// This is shorthand of [`tag`](Self::tag) and
-    /// its [`for_clone`](TraceTag::for_clone).
+    /// This is shorthand of [`tag`] and [`TraceTag::for_clone`].
+    /// 
+    /// [`tag`]: Self::tag
     ///
     /// # Examples
     ///
