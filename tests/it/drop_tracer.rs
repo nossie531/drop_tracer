@@ -7,6 +7,7 @@ fn new() {
     let result = DropTracer::new();
     assert_eq!(result.living_count(), 0);
     assert_eq!(result.dropped_count(), 0);
+    assert_eq!(result.total_count(), 0);
     assert_eq!(result.logs().iter().count(), 0);
     assert_eq!(result.states().iter().count(), 0);
 }
@@ -31,6 +32,17 @@ fn dropped_count() {
     let result = target.dropped_count();
     // Assert.
     assert_eq!(result, builder.dropped_count());
+}
+
+#[test]
+fn total_count() {
+    // Arrange.
+    let builder = &mut ts::TracerBuilder::new_normal();
+    let target = &builder.take();
+    // Act.
+    let result = target.total_count();
+    // Assert.
+    assert_eq!(result, target.living_count() + target.dropped_count());
 }
 
 #[test]

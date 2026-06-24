@@ -91,6 +91,26 @@ impl DropTracer {
         self.0.read().dropped_count
     }
 
+    /// Returns the number of values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let tracer = &DropTracer::new();
+    /// assert_eq!(tracer.total_count(), 0);
+    ///
+    /// let item = tracer.trace("some");
+    /// assert_eq!(tracer.total_count(), 1);
+    ///
+    /// drop(item);
+    /// assert_eq!(tracer.total_count(), 1);
+    #[must_use]
+    pub fn total_count(&self) -> usize {
+        self.living_count() + self.dropped_count()
+    }
+
     /// Returns tracing logs.
     ///
     /// # Locking
