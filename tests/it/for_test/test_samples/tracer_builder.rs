@@ -113,6 +113,10 @@ impl TracerBuilder {
         self.expected_states.values().filter(|&x| *x).count()
     }
 
+    pub fn dropped_count(&self) -> usize {
+        self.expected_states.values().filter(|&x| !*x).count()
+    }
+
     pub fn expected_logs(&self) -> &Vec<TraceLog> {
         &self.expected_logs
     }

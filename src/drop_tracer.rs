@@ -21,6 +21,8 @@ pub struct DropTracer(Arc<RwLock<DropTracerBody>>);
 pub(crate) struct DropTracerBody {
     /// The number of living values.
     living_count: usize,
+    /// The number of dropped values.
+    dropped_count: usize,
     /// Tracing logs.
     logs: Vec<TraceLog>,
     /// States (living or dropped) map for each values.
@@ -49,7 +51,7 @@ impl DropTracer {
         Default::default()
     }
 
-    /// Returns the number of living items.
+    /// Returns the number of living values.
     ///
     /// # Examples
     ///
@@ -67,6 +69,26 @@ impl DropTracer {
     #[must_use]
     pub fn living_count(&self) -> usize {
         self.0.read().living_count
+    }
+
+    /// Returns the number of dropped values.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let tracer = &DropTracer::new();
+    /// assert_eq!(tracer.dropped_count(), 0);
+    ///
+    /// let item = tracer.trace("some");
+    /// assert_eq!(tracer.dropped_count(), 0);
+    ///
+    /// drop(item);
+    /// assert_eq!(tracer.dropped_count(), 1);
+    #[must_use]
+    pub fn dropped_count(&self) -> usize {
+        self.0.read().dropped_count
     }
 
     /// Returns tracing logs.
@@ -240,6 +262,7 @@ impl DropTracer {
         this.logs.push(TraceLog::new_by_val(val, alloc));
         this.map.insert(tag, alloc);
         this.living_count = util::offset(this.living_count, 1, alloc);
+        this.dropped_count += !alloc as usize;
         Ok(())
     }
 }

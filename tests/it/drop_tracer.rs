@@ -6,7 +6,9 @@ use test_panic::prelude::*;
 fn new() {
     let result = DropTracer::new();
     assert_eq!(result.living_count(), 0);
+    assert_eq!(result.dropped_count(), 0);
     assert_eq!(result.logs().iter().count(), 0);
+    assert_eq!(result.states().iter().count(), 0);
 }
 
 #[test]
@@ -18,6 +20,17 @@ fn living_count() {
     let result = target.living_count();
     // Assert.
     assert_eq!(result, builder.living_count());
+}
+
+#[test]
+fn dropped_count() {
+    // Arrange.
+    let builder = &mut ts::TracerBuilder::new_normal();
+    let target = &builder.take();
+    // Act.
+    let result = target.dropped_count();
+    // Assert.
+    assert_eq!(result, builder.dropped_count());
 }
 
 #[test]

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `DropTracer::dropped_count`
 - `DropTracer::trace_on`
 - `TraceVal::tracer`
 
