@@ -26,7 +26,7 @@ pub(crate) struct DropTracerBody {
     /// Tracing logs.
     logs: Vec<TraceLog>,
     /// States (living or dropped) map for each values.
-    map: BTreeMap<TraceTag, bool>,
+    states: BTreeMap<TraceTag, bool>,
 }
 
 impl DropTracer {
@@ -170,7 +170,7 @@ impl DropTracer {
     /// assert_eq!(map.get(&TraceTag::new()), None);
     /// ```
     pub fn states(&self) -> MappedRwLockReadGuard<'_, impl StatusMap> {
-        RwLockReadGuard::map(self.0.read(), |x| &x.map)
+        RwLockReadGuard::map(self.0.read(), |x| &x.states)
     }
 
     /// Traces given new value.
@@ -261,7 +261,7 @@ impl DropTracer {
 
         // Collect current informations.
         let tag = TraceVal::tag(val);
-        let state = this.map.get(&tag).copied();
+        let state = this.states.get(&tag).copied();
         let capacity = this.logs.capacity();
 
         // Verify current informations.
@@ -274,13 +274,13 @@ impl DropTracer {
 
         // Reserve capacity for drop logging in the future.
         if alloc {
-            let numof_val = this.map.len() + 1;
+            let numof_val = this.states.len() + 1;
             this.logs.reserve((numof_val * 2).saturating_sub(capacity));
         }
 
         // Update and logging.
         this.logs.push(TraceLog::new_by_val(val, alloc));
-        this.map.insert(tag, alloc);
+        this.states.insert(tag, alloc);
         this.living_count = util::offset(this.living_count, 1, alloc);
         this.dropped_count += !alloc as usize;
         Ok(())
