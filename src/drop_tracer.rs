@@ -7,6 +7,7 @@ use parking_lot::MappedRwLockReadGuard;
 use parking_lot::RwLock;
 use parking_lot::RwLockReadGuard;
 use std::collections::BTreeMap;
+use std::collections::btree_map::Entry;
 use std::sync::Arc;
 use std::sync::Weak;
 
@@ -259,28 +260,22 @@ impl DropTracer {
             return Err(TraceError::TracerReading);
         };
 
-        // Collect current informations.
+        // Prepare state entry.
         let tag = TraceVal::tag(val);
-        let state = this.states.get(&tag).copied();
-        let capacity = this.logs.capacity();
+        let entry = this.states.entry(tag);
 
         // Verify current informations.
-        match (alloc, state) {
-            (true, Some(_)) => unreachable!(),
-            (false, None) => unreachable!(),
-            (false, Some(false)) => return Err(TraceError::DoubleDrop),
+        match (alloc, &entry) {
+            (true, Entry::Occupied(_)) => unreachable!(),
+            (false, Entry::Vacant(_)) => unreachable!(),
+            (false, Entry::Occupied(x)) if !*x.get() => return Err(TraceError::DoubleDrop),
             _ => {}
         }
 
-        // Reserve capacity for drop logging in the future.
-        if alloc {
-            let numof_val = this.states.len() + 1;
-            this.logs.reserve((numof_val * 2).saturating_sub(capacity));
-        }
-
         // Update and logging.
+        entry.and_modify(|x| *x = alloc).or_insert(alloc);
+        this.logs.reserve(alloc as usize * 2);
         this.logs.push(TraceLog::new_by_val(val, alloc));
-        this.states.insert(tag, alloc);
         this.living_count = util::offset(this.living_count, 1, alloc);
         this.dropped_count += !alloc as usize;
         Ok(())
