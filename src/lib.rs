@@ -22,7 +22,7 @@
 //! let tracer = &DropTracer::new();
 //! let data = &mut Vec::new();
 //!
-//! // Creates values for trace.
+//! // Create values for trace.
 //! let val1 = tracer.trace(1);
 //! let val2 = tracer.trace(2);
 //! let val3 = tracer.trace(3);
@@ -36,7 +36,7 @@
 //! data.extend([val1, val2, val3]);
 //! data.remove(0);
 //!
-//! // Veryfy tracer.
+//! // Verify tracer.
 //! let logs = tracer.logs();
 //! assert_eq!(tracer.living_count(), 2);
 //! assert!(logs.iter().eq([
