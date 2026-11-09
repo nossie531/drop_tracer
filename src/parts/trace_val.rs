@@ -152,14 +152,14 @@ impl<T> Drop for TraceVal<T> {
     /// # Panics
     ///
     /// Panics if related tracer is borrowed already or double drop is detected
-    /// (however, if panic has already occurred, doubl panic will not occur).
+    /// (however, if panic has already occurred, double panic will not occur).
     ///
     /// # Under the hood
     ///
-    /// Logging here does not require new memory allocation. Because the capacity
-    /// is reserved in advance when value tracing begins. This prevents double
-    /// panic flow (panic occurrence, value drop for panic, logging for drop,
-    /// memory allocation for logging, memory allocation fail, double panic).
+    /// Logging here does not require new memory allocation. Because the capacity is
+    /// reserved in advance when value tracing begins. This prevents double panic flow
+    /// (panic -> drop values for panic -> logging for drop -> memory allocation for
+    /// logging -> memory allocation fail -> double panic).
     fn drop(&mut self) {
         let log_result = self.log(false);
         if let Err(error) = log_result

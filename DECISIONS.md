@@ -6,7 +6,7 @@ Design decisions to this project will be documented in this file.
 
 ### Contexts
 
-A read write lock is required to make `DropTracer` support multithreading.
+A read write lock is required to make `DropTracer` support multi threading.
 
 ### Options
 

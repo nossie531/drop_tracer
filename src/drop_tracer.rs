@@ -26,7 +26,7 @@ pub(crate) struct DropTracerBody {
     dropped_count: usize,
     /// Tracing logs.
     logs: Vec<TraceLog>,
-    /// States (living or dropped) map for each values.
+    /// States (living or dropped) map for each value.
     states: BTreeMap<TraceTag, bool>,
 }
 
@@ -264,7 +264,7 @@ impl DropTracer {
         let tag = TraceVal::tag(val);
         let entry = this.states.entry(tag);
 
-        // Verify current informations.
+        // Verify current information.
         match (alloc, &entry) {
             (true, Entry::Occupied(_)) => unreachable!(),
             (false, Entry::Vacant(_)) => unreachable!(),
