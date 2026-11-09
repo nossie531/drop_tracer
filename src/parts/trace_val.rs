@@ -1,13 +1,11 @@
 //! Provider of [`TraceVal`].
 
 use crate::errors::TraceError;
-use crate::prelude::*;
+use crate::parts::*;
 use crate::*;
-use parking_lot::RwLock;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::ops::Deref;
-use std::sync::Weak;
 use std::thread;
 
 /// Tracing value wrapper.
@@ -33,7 +31,7 @@ pub struct TraceVal<T> {
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
-    tracer: Option<Weak<RwLock<DropTracerBody>>>,
+    tracer: Option<WeakDropTracer>,
 }
 
 impl<T> TraceVal<T> {

@@ -4,18 +4,16 @@ use crate::errors::*;
 use crate::parts::*;
 use crate::*;
 use parking_lot::MappedRwLockReadGuard;
-use parking_lot::RwLock;
 use parking_lot::RwLockReadGuard;
 use std::collections::BTreeMap;
 use std::collections::btree_map::Entry;
 use std::sync::Arc;
-use std::sync::Weak;
 
 /// Drop tracer.
 ///
 /// See the [crate level documentation](crate) for more details.
 #[derive(Clone, Debug, Default)]
-pub struct DropTracer(Arc<RwLock<DropTracerBody>>);
+pub struct DropTracer(SharedDropTracer);
 
 /// Body of drop tracer.
 #[derive(Debug, Default)]
@@ -268,12 +266,12 @@ impl DropTracer {
     }
 
     /// Creates a new instance from internal data.
-    pub(crate) fn from_arc(arc: &Arc<RwLock<DropTracerBody>>) -> Self {
+    pub(crate) fn from_arc(arc: &SharedDropTracer) -> Self {
         Self(arc.clone())
     }
 
     /// Returns weak reference.
-    pub(crate) fn weak(&self) -> Weak<RwLock<DropTracerBody>> {
+    pub(crate) fn weak(&self) -> WeakDropTracer {
         Arc::downgrade(&self.0)
     }
 
