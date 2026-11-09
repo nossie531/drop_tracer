@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Polish documentations.
+- Update crate's dependencies.
 
 ## [0.6.1] - 2026-08-22
 

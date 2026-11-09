@@ -10,9 +10,9 @@ keywords = ["test", "memory-leak"]
 categories = ["memory-management", "development-tools::testing"]
 
 [dependencies]
-parking_lot = "0.12"
+parking_lot = "0.13"
 
 [dev-dependencies]
 rand = "0.10"
 rand_pcg = "0.10"
-test_panic = "0.8"
+test_panic = "0.9"
