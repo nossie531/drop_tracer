@@ -174,6 +174,30 @@ impl DropTracer {
         RwLockReadGuard::map(self.0.read(), |x| &x.states)
     }
 
+    /// Restart the new logging.
+    ///
+    /// This operation clears the current logs.
+    /// But it keeps the current living states.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let tracer = &DropTracer::new();
+    /// let item = tracer.trace("some");
+    /// assert_eq!(tracer.logs().iter().count(), 1);
+    ///
+    /// tracer.restart();
+    /// assert_eq!(tracer.logs().iter().count(), 0);
+    ///
+    /// drop(item);
+    /// assert_eq!(tracer.logs().iter().count(), 1);
+    /// ```
+    pub fn restart(&self) {
+        self.0.write().logs.clear();
+    }
+
     /// Traces given new value.
     ///
     /// This is shorthand of [`trace_on`] and [`TraceVal::new`].

@@ -70,6 +70,20 @@ fn states() {
 }
 
 #[test]
+fn restart() {
+    // Arrange.
+    let builder = &mut ts::TracerBuilder::new_normal();
+    let target = &builder.take();
+    // Act.
+    target.restart();
+    // Assert.
+    let expected_states = builder.expected_states();
+    let expected_states = expected_states.iter().map(|(k, v)| (k, *v));
+    assert_eq!(target.logs().iter().count(), 0);
+    assert!(target.states().iter().eq(expected_states));
+}
+
+#[test]
 fn trace() {
     when_normal();
     when_reading_tracer();
