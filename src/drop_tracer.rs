@@ -253,7 +253,7 @@ impl DropTracer {
     /// assert_eq!(tracer.living_count(), 0);
     /// ```
     pub fn trace_on<T>(&self, value: &mut TraceVal<T>) {
-        if let Some(tracer) = value.tracer() {
+        if let Some(tracer) = TraceVal::tracer(value) {
             if &tracer == self {
                 return;
             } else {
@@ -261,7 +261,7 @@ impl DropTracer {
             }
         }
 
-        value.set_tracer(self);
+        TraceVal::set_tracer(value, self);
         self.log(value, true).unwrap();
     }
 

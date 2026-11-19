@@ -10,11 +10,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `DropTracer::restart`
+- `TraceVal::new_bomb`
+- `TraceVal::with_bomb`
+- `TraceVal::is_bomb`
 - `UnwindSafe` for `DropTracer`  
 - `RefUnwindSafe` for `DropTracer`
 
 ### Changed
 
+- `LogList` trait requires `len` method.
+- `LogList` trait requires `Index` trait.
+- `TraceVal::tracer` arguments
 - Polish documentations.
 - Update crate's dependencies.
 
