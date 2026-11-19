@@ -8,6 +8,7 @@ use test_panic::prelude::*;
 #[test]
 fn new() {
     let result = TraceVal::new(ts::SOME);
+    assert!(!TraceVal::is_bomb(&result));
     assert_eq!(*result, ts::SOME);
     assert_eq!(TraceVal::tag(&result).for_clone(), false);
 }
