@@ -1,6 +1,6 @@
 //! Crate's messages.
 
-/// Message that detect working tracer.
+/// Message that detect tracer borrowed.
 pub const TRACER_BORROWED: &str = "Tracer borrowed (ex: reading logs).";
 
 /// Message that detect double drop.
