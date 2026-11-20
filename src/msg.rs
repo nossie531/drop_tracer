@@ -9,6 +9,9 @@ pub const DOUBLE_DROPPED: &str = "Double drop is detected.";
 /// Message that detect value binded.
 pub const VALUE_BINDED: &str = "Value is already binded other tracer.";
 
+/// Message that detect drop bomb explosion.
+pub const BOMB_EXPLODED: &str = "Bomb exploded.";
+
 /// Message that detect memory leak.
 pub fn leak_error(count: usize) -> String {
     format!("Memory leak is dtected on {} values.", count)

@@ -14,6 +14,21 @@ fn new() {
 }
 
 #[test]
+fn new_bomb() {
+    let result = TraceVal::new_bomb(ts::SOME, true);
+    assert!(TraceVal::is_bomb(&result));
+    mem::forget(result);
+}
+
+#[test]
+fn is_bomb() {
+    let target = TraceVal::new_bomb(ts::SOME, true);
+    let result = TraceVal::is_bomb(&target);
+    assert!(result);
+    mem::forget(target);
+}
+
+#[test]
 fn tag() {
     // Arrange.
     let target1 = TraceVal::new(ts::SOME);
@@ -33,7 +48,7 @@ fn tracer() {
     let tracer = &DropTracer::new();
     let target = &tracer.trace(ts::SOME);
     // Act.
-    let result = target.tracer();
+    let result = TraceVal::tracer(target);
     // Assert.
     assert_eq!(result.as_ref(), Some(tracer));
 }
@@ -51,8 +66,8 @@ fn deref() {
 #[test]
 fn clone() {
     when_without_tracer();
-    when_with_tracer();
-    when_reading_tracer();
+    when_tracer_logging();
+    when_tracer_reading();
 
     fn when_without_tracer() {
         // Arrange.
@@ -61,9 +76,10 @@ fn clone() {
         let result = target.clone();
         // Assert.
         assert_eq!(result, target);
+        assert_eq!(TraceVal::is_bomb(&result), TraceVal::is_bomb(&target));
     }
 
-    fn when_with_tracer() {
+    fn when_tracer_logging() {
         // Arrange.
         let tracer = &mut DropTracer::new();
         let target = tracer.trace(ts::SOME);
@@ -73,13 +89,13 @@ fn clone() {
         let logs = tracer.logs();
         let last_log_asis = logs.iter().last().unwrap();
         let last_log_tobe = &TraceLog::new(&TraceVal::tag(&result), true);
-        assert_eq!(*result, *target);
+        assert_eq!(result, target);
         assert_eq!(TraceVal::tag(&result).for_clone(), true);
         assert_ne!(TraceVal::tag(&result), TraceVal::tag(&target));
         assert_eq!(last_log_asis, last_log_tobe);
     }
 
-    fn when_reading_tracer() {
+    fn when_tracer_reading() {
         // Arrange.
         let tracer = &mut DropTracer::new();
         let target = &tracer.trace(ts::SOME);
@@ -98,6 +114,7 @@ fn drop() {
     when_normal();
     when_reading_tracer();
     when_double_drop();
+    when_bomb();
 
     fn when_normal() {
         // Arrange.
@@ -107,8 +124,7 @@ fn drop() {
         // Act.
         mem::drop(target);
         // Assert.
-        let states = tracer.states();
-        assert_eq!(states.get(&tag), Some(false));
+        assert_eq!(tracer.states().get(&tag), Some(false));
     }
 
     fn when_reading_tracer() {
@@ -134,6 +150,21 @@ fn drop() {
         let result = test_panic(|| mem::drop(val));
         // Assert.
         assert!(result.is_panic());
+    }
+
+    fn when_bomb() {
+        // Arrange.
+        let tracer = &mut DropTracer::new();
+        let target = TraceVal::with_bomb(tracer.trace(ts::SOME), true);
+        let tag = TraceVal::tag(&target);
+        // Act.
+        let result = test_panic(|| mem::drop(target));
+        // Assert.
+        let states = tracer.states();
+        assert!(result.is_panic());
+        assert_eq!(states.get(&tag), Some(false));
+        assert_eq!(tracer.logs()[0].is_alloc(), true);
+        assert_eq!(tracer.logs()[1].is_alloc(), false);
     }
 }
 

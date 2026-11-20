@@ -28,6 +28,8 @@ use std::thread;
 pub struct TraceVal<T> {
     /// Wrapped value.
     value: T,
+    /// Bomb flag.
+    bomb: bool,
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
@@ -49,9 +51,65 @@ impl<T> TraceVal<T> {
     pub fn new(value: T) -> Self {
         Self {
             value,
+            bomb: false,
             tag: TraceTag::new(),
             tracer: None,
         }
+    }
+
+    /// Creates a new bomb instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    /// use std::panic::{self, AssertUnwindSafe};
+    ///
+    /// let val = TraceVal::new_bomb("sample", true);
+    /// assert!(TraceVal::is_bomb(&val));
+    /// let result = panic::catch_unwind(AssertUnwindSafe(|| {
+    ///     std::mem::drop(val);
+    /// }));
+    /// assert!(result.is_err());
+    /// ```
+    #[must_use]
+    pub fn new_bomb(value: T, bomb: bool) -> Self {
+        Self::with_bomb(Self::new(value), bomb)
+    }
+
+    /// Creates a new instance with the given bomb flag.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    /// use std::panic::{self, AssertUnwindSafe};
+    ///
+    /// let val = TraceVal::new("sample");
+    /// let val = TraceVal::with_bomb(val, true);
+    /// assert!(TraceVal::is_bomb(&val));
+    /// std::mem::forget(val);
+    /// ```
+    #[must_use]
+    pub fn with_bomb(mut this: Self, value: bool) -> Self {
+        this.bomb = value;
+        this
+    }
+
+    /// Returns `true` if this is bomb.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let val = TraceVal::new_bomb("sample", true);
+    /// assert!(TraceVal::is_bomb(&val));
+    /// std::mem::forget(val);
+    /// ```
+    #[must_use]
+    pub fn is_bomb(this: &Self) -> bool {
+        this.bomb
     }
 
     /// Returns trace tag.
@@ -84,22 +142,22 @@ impl<T> TraceVal<T> {
     /// use drop_tracer::prelude::*;
     ///
     /// let tracer = &DropTracer::new();
-    /// let value = tracer.trace("sample");
-    /// assert_eq!(value.tracer().as_ref(), Some(tracer));
+    /// let value = &tracer.trace("sample");
+    /// assert_eq!(TraceVal::tracer(value).as_ref(), Some(tracer));
     /// ```
     #[must_use]
-    pub fn tracer(&self) -> Option<DropTracer> {
-        Some(DropTracer::from_arc(&self.tracer.as_ref()?.upgrade()?))
+    pub fn tracer(this: &Self) -> Option<DropTracer> {
+        Some(DropTracer::from_arc(&this.tracer.as_ref()?.upgrade()?))
     }
 
     /// Sets the tracer.
-    pub(crate) fn set_tracer(&mut self, value: &DropTracer) {
-        self.tracer = Some(value.weak());
+    pub(crate) fn set_tracer(this: &mut Self, value: &DropTracer) {
+        this.tracer = Some(value.weak());
     }
 
     /// Logs the operation about this value.
     fn log(&self, alloc: bool) -> Result<(), TraceError> {
-        match self.tracer() {
+        match Self::tracer(self) {
             None => Ok(()),
             Some(x) => x.log(self, alloc),
         }
@@ -131,6 +189,7 @@ where
     fn clone(&self) -> Self {
         let ret = Self {
             value: self.value.clone(),
+            bomb: self.bomb,
             tag: TraceTag::new_for_clone(),
             tracer: self.tracer.clone(),
         };
@@ -149,8 +208,14 @@ impl<T> Drop for TraceVal<T> {
     ///
     /// # Panics
     ///
-    /// Panics if related tracer is borrowed already or double drop is detected
-    /// (however, if panic has already occurred, double panic will not occur).
+    /// Panics in the following cases.
+    ///
+    /// - Bomb flag and tracer is setted.
+    /// - Related tracer is borrowed already.
+    /// - Double drop is detected.
+    ///
+    /// If panic has already occurred, double panic
+    /// will not occur to avoid process aborting.
     ///
     /// # Under the hood
     ///
@@ -160,10 +225,17 @@ impl<T> Drop for TraceVal<T> {
     /// logging -> memory allocation fail -> double panic).
     fn drop(&mut self) {
         let log_result = self.log(false);
-        if let Err(error) = log_result
-            && !thread::panicking()
-        {
+
+        if thread::panicking() {
+            return;
+        }
+
+        if let Err(error) = log_result {
             error.panic();
+        }
+
+        if self.bomb && Self::tracer(self).is_some() {
+            panic!("{}", msg::BOMB_EXPLODED);
         }
     }
 }
