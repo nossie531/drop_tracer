@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No items.
+
+## [0.7.0] - 2026-11-22
+
 ### Added
 
 - `DropTracer::restart`
@@ -98,7 +102,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First release.
 
-[Unreleased]: https://github.com/nossie531/drop_tracer/compare/v0.6.1...HEAD
+[Unreleased]: https://github.com/nossie531/drop_tracer/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/nossie531/drop_tracer/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/nossie531/drop_tracer/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/nossie531/drop_tracer/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/nossie531/drop_tracer/compare/v0.4.0...v0.5.0
