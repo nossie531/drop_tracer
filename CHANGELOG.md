@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `DropTracer::restart`
+- `DropTracer::trace_bomb`
 - `TraceVal::new_bomb`
 - `TraceVal::with_bomb`
 - `TraceVal::is_bomb`

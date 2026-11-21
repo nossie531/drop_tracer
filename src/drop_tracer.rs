@@ -226,6 +226,39 @@ impl DropTracer {
         value
     }
 
+    /// Traces given new value with bomb flag.
+    ///
+    /// This is shorthand of [`trace_on`] and [`TraceVal::new_bomb`].
+    ///
+    /// [`trace_on`]: Self::trace_on
+    ///
+    /// # Panics
+    ///
+    /// Panics if tracer is now reading.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    /// use std::panic::{self, AssertUnwindSafe};
+    ///
+    /// let tracer = &DropTracer::new();
+    /// assert_eq!(tracer.living_count(), 0);
+    ///
+    /// let item = tracer.trace_bomb("some", true);
+    /// assert_eq!(tracer.living_count(), 1);
+    ///
+    /// let result = panic::catch_unwind(AssertUnwindSafe(|| drop(item))).is_ok();
+    ///
+    /// assert!(!result);
+    /// assert_eq!(tracer.living_count(), 0);
+    /// ```
+    pub fn trace_bomb<T>(&self, value: T, bomb: bool) -> TraceVal<T> {
+        let mut value = TraceVal::new_bomb(value, bomb);
+        self.trace_on(&mut value);
+        value
+    }
+
     /// Traces given existing value.
     ///
     /// if value is already binded this tracer, no-op.

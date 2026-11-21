@@ -24,6 +24,11 @@ use std::thread;
 /// On the other hand, values created by [`new`][Self::new] are not
 /// bounded to any tracers. These unbounded value can be bounded
 /// with [`DropTracer::trace_on`].
+///
+/// # Bomb panic
+///
+/// Bomb panics are occured if the value is bounded to the tracer
+/// (So bomb panic is controled by the same rule as ["Tracing"](#Tracing)).
 #[derive(Debug, Default)]
 pub struct TraceVal<T> {
     /// Wrapped value.
@@ -63,14 +68,9 @@ impl<T> TraceVal<T> {
     ///
     /// ```
     /// use drop_tracer::prelude::*;
-    /// use std::panic::{self, AssertUnwindSafe};
     ///
     /// let val = TraceVal::new_bomb("sample", true);
     /// assert!(TraceVal::is_bomb(&val));
-    /// let result = panic::catch_unwind(AssertUnwindSafe(|| {
-    ///     std::mem::drop(val);
-    /// }));
-    /// assert!(result.is_err());
     /// ```
     #[must_use]
     pub fn new_bomb(value: T, bomb: bool) -> Self {
@@ -83,12 +83,10 @@ impl<T> TraceVal<T> {
     ///
     /// ```
     /// use drop_tracer::prelude::*;
-    /// use std::panic::{self, AssertUnwindSafe};
     ///
     /// let val = TraceVal::new("sample");
     /// let val = TraceVal::with_bomb(val, true);
     /// assert!(TraceVal::is_bomb(&val));
-    /// std::mem::forget(val);
     /// ```
     #[must_use]
     pub fn with_bomb(mut this: Self, value: bool) -> Self {
@@ -105,7 +103,6 @@ impl<T> TraceVal<T> {
     ///
     /// let val = TraceVal::new_bomb("sample", true);
     /// assert!(TraceVal::is_bomb(&val));
-    /// std::mem::forget(val);
     /// ```
     #[must_use]
     pub fn is_bomb(this: &Self) -> bool {

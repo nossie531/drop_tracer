@@ -100,6 +100,7 @@ fn trace() {
         let logs_asis = &Vec::from_iter(target.logs().iter().cloned());
         let logs_tobe = &Vec::from_iter(logs_old.chain([new_log]));
         assert_eq!(*result, ts::SOME);
+        assert_eq!(TraceVal::is_bomb(&result), false);
         assert_eq!(logs_asis, logs_tobe);
     }
 
@@ -110,6 +111,43 @@ fn trace() {
         let logs = target.logs();
         // Act.
         let result = test_panic(|| target.trace(ts::SOME));
+        // Assert.
+        assert!(result.is_panic());
+        // Clean up.
+        std::mem::drop(logs);
+    }
+}
+
+#[test]
+fn trace_bomb() {
+    when_normal();
+    when_reading_tracer();
+
+    fn when_normal() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
+        // Act.
+        let result = target.trace_bomb(ts::SOME, true);
+        // Assert.
+        let new_log = TraceLog::new(&TraceVal::tag(&result), true);
+        let logs_old = builder.expected_logs().iter().cloned();
+        let logs_asis = &Vec::from_iter(target.logs().iter().cloned());
+        let logs_tobe = &Vec::from_iter(logs_old.chain([new_log]));
+        assert_eq!(*result, ts::SOME);
+        assert_eq!(TraceVal::is_bomb(&result), true);
+        assert_eq!(logs_asis, logs_tobe);
+        // Clean up.
+        std::mem::forget(result);
+    }
+
+    fn when_reading_tracer() {
+        // Arrange.
+        let builder = &mut ts::TracerBuilder::new_normal();
+        let target = &builder.take();
+        let logs = target.logs();
+        // Act.
+        let result = test_panic(|| target.trace_bomb(ts::SOME, false));
         // Assert.
         assert!(result.is_panic());
         // Clean up.

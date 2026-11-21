@@ -18,6 +18,38 @@ These values' allocations and drops are logged by the tracer.
 
 ## Examples
 
+### By helper
+
+`drop_test` is helper for local memory leak check.\
+Following code detects memory leak by cyclic `Rc`.
+
+```rust
+use std::cell::RefCell;
+use std::rc::Rc;
+use drop_tracer::prelude::*;
+
+let result = drop_test::try_run(|t| {
+    let x = RcChain::new(t.trace("item1"));
+    let y = RcChain::new(t.trace("item2"));
+    x.borrow_mut().next = Some(y.clone());
+    y.borrow_mut().next = Some(x.clone());
+});
+
+assert_eq!(result.unwrap_err().count(), 2);
+
+struct RcChain {
+    next: Option<Rc<RefCell<Self>>>,
+    _val: TraceVal<&'static str>,
+}
+
+impl RcChain {
+    pub fn new(val: TraceVal<&'static str>) -> Rc<RefCell<Self>> {
+        let result = Self { next: None, _val: val };
+        Rc::new(RefCell::new(result))
+    }
+}
+```
+
 ### By manual
 
 Following code trace values in vector.
@@ -54,36 +86,34 @@ assert!(logs.iter().eq([
 ]));
 ```
 
-### By helper
+### Bomb panic
 
-`drop_test` is helper for local memory leak check.\
-Following code detects memory leak by cyclic `Rc`.
+The following code tests panic on drop.
+
+Note: Panic on drop is not recommended.\
+But, robust collections consider element drop panic.
 
 ```rust
-use std::cell::RefCell;
-use std::rc::Rc;
 use drop_tracer::prelude::*;
+use std::panic::{self, AssertUnwindSafe};
 
-let result = drop_test::try_run(|t| {
-    let x = RcChain::new(t.trace("item1"));
-    let y = RcChain::new(t.trace("item2"));
-    x.borrow_mut().next = Some(y.clone());
-    y.borrow_mut().next = Some(x.clone());
-});
+// Arrange tracer.
+let tracer = &DropTracer::new();
 
-assert_eq!(result.unwrap_err().count(), 2);
+// Create values with bomb.
+let val1 = tracer.trace(1);
+let val2 = tracer.trace_bomb(2, true);
+let val3 = tracer.trace(3);
+let data = &mut vec![val1, val2, val3];
 
-struct RcChain {
-    next: Option<Rc<RefCell<Self>>>,
-    _val: TraceVal<&'static str>,
-}
+// Do some action.
+panic::catch_unwind(AssertUnwindSafe(|| {
+    data.clear();
+}));
 
-impl RcChain {
-    pub fn new(val: TraceVal<&'static str>) -> Rc<RefCell<Self>> {
-        let result = Self { next: None, _val: val };
-        Rc::new(RefCell::new(result))
-    }
-}
+// Verify tracer.
+let logs = tracer.logs();
+assert_eq!(tracer.living_count(), 0);
 ```
 
 ## History
