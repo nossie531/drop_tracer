@@ -5,7 +5,7 @@ use crate::parts::*;
 use crate::*;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::thread;
 
 /// Tracing value wrapper.
@@ -164,6 +164,12 @@ impl<T> Deref for TraceVal<T> {
     type Target = T;
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<T> DerefMut for TraceVal<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 

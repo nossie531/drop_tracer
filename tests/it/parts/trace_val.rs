@@ -1,7 +1,7 @@
 use crate::for_test::*;
 use drop_tracer::prelude::*;
 use std::cmp::Ordering;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 use std::{mem, ptr};
 use test_panic::prelude::*;
 
@@ -56,9 +56,19 @@ fn tracer() {
 #[test]
 fn deref() {
     // Arrange.
-    let target = TraceVal::new(ts::SOME);
+    let target = &TraceVal::new(ts::SOME);
     // Act.
     let result = target.deref();
+    // Assert.
+    assert_eq!(result, &ts::SOME);
+}
+
+#[test]
+fn deref_mut() {
+    // Arrange.
+    let target = &mut TraceVal::new(ts::SOME);
+    // Act.
+    let result = target.deref_mut();
     // Assert.
     assert_eq!(result, &ts::SOME);
 }
