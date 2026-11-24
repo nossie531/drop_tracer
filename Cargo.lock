@@ -42,7 +42,7 @@ dependencies = [
 
 [[package]]
 name = "drop_tracer"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "parking_lot",
  "rand",
