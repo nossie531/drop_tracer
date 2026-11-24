@@ -12,10 +12,9 @@ use std::thread;
 ///
 /// # Wrapping
 ///
-/// This wrapper type can be treated almost like original type.
-/// For example, [`Deref`] simply returns the wrapped value.
-/// Also, basic traits such as [`Clone`], [`Default`], [`Eq`],
-/// [`Ord`], and [`Hash`] follow the wrapped type.
+/// This wrapper type can be treated like original type. However, this type
+/// has some original fields like the bomb flag. So, be careful that those
+/// fields are ignored at comparing by [`Eq`], [`Ord`] and [`Hash`].
 ///
 /// # Tracing
 ///
@@ -27,8 +26,8 @@ use std::thread;
 ///
 /// # Bomb panic
 ///
-/// Bomb panics are occured if the value is bounded to the tracer
-/// (So bomb panic is controled by the same rule as ["Tracing"](#Tracing)).
+/// Bomb panics are occured if the the value is traced and bomb flag is set.
+/// (see ["Tracing"](#Tracing) about tracing rule).
 #[derive(Debug, Default)]
 pub struct TraceVal<T> {
     /// Wrapped value.
