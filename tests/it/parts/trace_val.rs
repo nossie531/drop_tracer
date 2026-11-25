@@ -17,7 +17,6 @@ fn new() {
 fn new_bomb() {
     let result = TraceVal::new_bomb(ts::SOME, true);
     assert!(TraceVal::is_bomb(&result));
-    mem::forget(result);
 }
 
 #[test]
@@ -25,7 +24,13 @@ fn is_bomb() {
     let target = TraceVal::new_bomb(ts::SOME, true);
     let result = TraceVal::is_bomb(&target);
     assert!(result);
-    mem::forget(target);
+}
+
+#[test]
+fn set_bomb() {
+    let target = &TraceVal::new(ts::SOME);
+    TraceVal::set_bomb(target, true);
+    assert!(TraceVal::is_bomb(&target));
 }
 
 #[test]

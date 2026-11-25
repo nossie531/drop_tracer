@@ -35,7 +35,7 @@ pub struct TraceVal<T> {
     /// Wrapped value.
     value: T,
     /// Bomb flag.
-    bomb: bool,
+    bomb: RwLock<bool>,
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
@@ -57,7 +57,7 @@ impl<T> TraceVal<T> {
     pub fn new(value: T) -> Self {
         Self {
             value,
-            bomb: false,
+            bomb: RwLock::new(false),
             tag: TraceTag::new(),
             tracer: AsNormal::new(RwLock::new(None)),
         }
@@ -91,7 +91,7 @@ impl<T> TraceVal<T> {
     /// ```
     #[must_use]
     pub fn with_bomb(mut this: Self, value: bool) -> Self {
-        this.bomb = value;
+        this.bomb = RwLock::new(value);
         this
     }
 
@@ -107,7 +107,22 @@ impl<T> TraceVal<T> {
     /// ```
     #[must_use]
     pub fn is_bomb(this: &Self) -> bool {
-        this.bomb
+        *this.bomb.read()
+    }
+
+    /// Sets the bomb flag.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let val = TraceVal::new("sample");
+    /// TraceVal::set_bomb(&val, true);
+    /// assert!(TraceVal::is_bomb(&val));
+    /// ```
+    pub fn set_bomb(this: &Self, value: bool) {
+        *this.bomb.write() = value;
     }
 
     /// Returns trace tag.
@@ -196,7 +211,7 @@ where
 
         let ret = Self {
             value: self.value.clone(),
-            bomb: self.bomb,
+            bomb: RwLock::new(*self.bomb.read()),
             tag: TraceTag::new_for_clone(),
             tracer: AsNormal::new(RwLock::new(tracer)),
         };
@@ -241,7 +256,7 @@ impl<T> Drop for TraceVal<T> {
             error.panic();
         }
 
-        if self.bomb && Self::tracer(self).is_some() {
+        if *self.bomb.read() && Self::tracer(self).is_some() {
             panic!("{}", msg::BOMB_EXPLODED);
         }
     }
