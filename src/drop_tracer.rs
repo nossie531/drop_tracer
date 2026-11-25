@@ -2,6 +2,7 @@
 
 use crate::errors::*;
 use crate::parts::*;
+use crate::util::*;
 use crate::*;
 use parking_lot::MappedRwLockReadGuard;
 use parking_lot::RwLockReadGuard;
@@ -13,7 +14,7 @@ use std::sync::Arc;
 ///
 /// See the [crate level documentation](crate) for more details.
 #[derive(Clone, Debug, Default)]
-pub struct DropTracer(SharedDropTracer);
+pub struct DropTracer(AsNormal<SharedDropTracer>);
 
 /// Body of drop tracer.
 #[derive(Debug, Default)]
@@ -221,8 +222,8 @@ impl DropTracer {
     /// assert_eq!(tracer.living_count(), 0);
     /// ```
     pub fn trace<T>(&self, value: T) -> TraceVal<T> {
-        let mut value = TraceVal::new(value);
-        self.trace_on(&mut value);
+        let value = TraceVal::new(value);
+        self.trace_on(&value);
         value
     }
 
@@ -254,8 +255,8 @@ impl DropTracer {
     /// assert_eq!(tracer.living_count(), 0);
     /// ```
     pub fn trace_bomb<T>(&self, value: T, bomb: bool) -> TraceVal<T> {
-        let mut value = TraceVal::new_bomb(value, bomb);
-        self.trace_on(&mut value);
+        let value = TraceVal::new_bomb(value, bomb);
+        self.trace_on(&value);
         value
     }
 
@@ -278,14 +279,14 @@ impl DropTracer {
     /// let tracer = &DropTracer::new();
     /// assert_eq!(tracer.living_count(), 0);
     ///
-    /// let mut val = TraceVal::new("some");
-    /// tracer.trace_on(&mut val);
+    /// let val = TraceVal::new("some");
+    /// tracer.trace_on(&val);
     /// assert_eq!(tracer.living_count(), 1);
     ///
     /// drop(val);
     /// assert_eq!(tracer.living_count(), 0);
     /// ```
-    pub fn trace_on<T>(&self, value: &mut TraceVal<T>) {
+    pub fn trace_on<T>(&self, value: &TraceVal<T>) {
         if let Some(tracer) = TraceVal::tracer(value) {
             if &tracer == self {
                 return;
@@ -300,7 +301,7 @@ impl DropTracer {
 
     /// Creates a new instance from internal data.
     pub(crate) fn from_arc(arc: &SharedDropTracer) -> Self {
-        Self(arc.clone())
+        Self(AsNormal::new(arc.clone()))
     }
 
     /// Returns weak reference.

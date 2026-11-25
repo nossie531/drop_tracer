@@ -2,7 +2,9 @@
 
 use crate::errors::*;
 use crate::parts::*;
+use crate::util::*;
 use crate::*;
+use parking_lot::RwLock;
 use std::cmp::Ordering;
 use std::hash::{Hash, Hasher};
 use std::ops::{Deref, DerefMut};
@@ -37,7 +39,7 @@ pub struct TraceVal<T> {
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
-    tracer: Option<WeakDropTracer>,
+    tracer: AsNormal<RwLock<Option<WeakDropTracer>>>,
 }
 
 impl<T> TraceVal<T> {
@@ -57,7 +59,7 @@ impl<T> TraceVal<T> {
             value,
             bomb: false,
             tag: TraceTag::new(),
-            tracer: None,
+            tracer: AsNormal::new(RwLock::new(None)),
         }
     }
 
@@ -143,12 +145,13 @@ impl<T> TraceVal<T> {
     /// ```
     #[must_use]
     pub fn tracer(this: &Self) -> Option<DropTracer> {
-        Some(DropTracer::from_arc(&this.tracer.as_ref()?.upgrade()?))
+        let tracer = this.tracer.read().as_ref()?.upgrade()?;
+        Some(DropTracer::from_arc(&tracer))
     }
 
     /// Sets the tracer.
-    pub(crate) fn set_tracer(this: &mut Self, value: &DropTracer) {
-        this.tracer = Some(value.weak());
+    pub(crate) fn set_tracer(this: &Self, value: &DropTracer) {
+        *this.tracer.write() = Some(value.weak());
     }
 
     /// Logs the operation about this value.
@@ -189,11 +192,13 @@ where
     ///
     /// Panics if related tracer is borrowed already.
     fn clone(&self) -> Self {
+        let tracer = self.tracer.read().as_ref().map(WeakDropTracer::clone);
+
         let ret = Self {
             value: self.value.clone(),
             bomb: self.bomb,
             tag: TraceTag::new_for_clone(),
-            tracer: self.tracer.clone(),
+            tracer: AsNormal::new(RwLock::new(tracer)),
         };
 
         let log_result = ret.log(true);

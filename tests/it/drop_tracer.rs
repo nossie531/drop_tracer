@@ -166,7 +166,7 @@ fn trace_on() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
         let target = &builder.take();
-        let value = &mut TraceVal::new(ts::SOME);
+        let value = &TraceVal::new(ts::SOME);
         // Act.
         target.trace_on(value);
         // Assert.
@@ -183,7 +183,7 @@ fn trace_on() {
         let target = &builder.take();
         let logs = target.logs();
         // Act.
-        let result = test_panic(|| target.trace_on(&mut TraceVal::new(ts::SOME)));
+        let result = test_panic(|| target.trace_on(&TraceVal::new(ts::SOME)));
         // Assert.
         assert!(result.is_panic());
         // Clean up.
@@ -194,7 +194,7 @@ fn trace_on() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
         let target = &builder.take();
-        let value = &mut target.trace(ts::SOME);
+        let value = &target.trace(ts::SOME);
         // Act.
         target.trace_on(value);
         // Assert.
@@ -211,7 +211,7 @@ fn trace_on() {
         let builder2 = &mut ts::TracerBuilder::new_normal();
         let target = &builder1.take();
         let other = &builder2.take();
-        let value = &mut other.trace(ts::SOME);
+        let value = &other.trace(ts::SOME);
         // Act.
         let result = test_panic(|| target.trace_on(value));
         // Assert.
