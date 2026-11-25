@@ -1,6 +1,6 @@
 //! Provider of [`TraceVal`].
 
-use crate::errors::TraceError;
+use crate::errors::*;
 use crate::parts::*;
 use crate::*;
 use std::cmp::Ordering;
