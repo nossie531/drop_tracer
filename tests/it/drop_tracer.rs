@@ -16,7 +16,7 @@ fn new() {
 fn living_count() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = &builder.take();
+    let target = &builder.build();
     // Act.
     let result = target.living_count();
     // Assert.
@@ -27,7 +27,7 @@ fn living_count() {
 fn dropped_count() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = &builder.take();
+    let target = &builder.build();
     // Act.
     let result = target.dropped_count();
     // Assert.
@@ -38,7 +38,7 @@ fn dropped_count() {
 fn total_count() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = &builder.take();
+    let target = &builder.build();
     // Act.
     let result = target.total_count();
     // Assert.
@@ -49,7 +49,7 @@ fn total_count() {
 fn logs() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = &builder.take();
+    let target = &builder.build();
     // Act.
     let result = target.logs();
     // Assert.
@@ -60,7 +60,7 @@ fn logs() {
 fn states() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = &builder.take();
+    let target = &builder.build();
     // Act.
     let result = target.states();
     // Assert.
@@ -73,7 +73,7 @@ fn states() {
 fn restart() {
     // Arrange.
     let builder = &mut ts::TracerBuilder::new_normal();
-    let target = &builder.take();
+    let target = &builder.build();
     // Act.
     target.restart();
     // Assert.
@@ -91,7 +91,7 @@ fn trace() {
     fn when_normal() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         // Act.
         let result = target.trace(ts::SOME);
         // Assert.
@@ -107,7 +107,7 @@ fn trace() {
     fn when_reading_tracer() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         let logs = target.logs();
         // Act.
         let result = test_panic(|| target.trace(ts::SOME));
@@ -126,7 +126,7 @@ fn trace_bomb() {
     fn when_normal() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         // Act.
         let result = target.trace_bomb(ts::SOME, true);
         // Assert.
@@ -144,7 +144,7 @@ fn trace_bomb() {
     fn when_reading_tracer() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         let logs = target.logs();
         // Act.
         let result = test_panic(|| target.trace_bomb(ts::SOME, false));
@@ -165,7 +165,7 @@ fn trace_on() {
     fn when_normal() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         let value = &TraceVal::new(ts::SOME);
         // Act.
         target.trace_on(value);
@@ -180,7 +180,7 @@ fn trace_on() {
     fn when_reading_tracer() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         let logs = target.logs();
         // Act.
         let result = test_panic(|| target.trace_on(&TraceVal::new(ts::SOME)));
@@ -193,7 +193,7 @@ fn trace_on() {
     fn when_dup() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = &builder.take();
+        let target = &builder.build();
         let value = &target.trace(ts::SOME);
         // Act.
         target.trace_on(value);
@@ -209,12 +209,20 @@ fn trace_on() {
         // Arrange.
         let builder1 = &mut ts::TracerBuilder::new_normal();
         let builder2 = &mut ts::TracerBuilder::new_normal();
-        let target = &builder1.take();
-        let other = &builder2.take();
+        let target = &builder1.build();
+        let other = &builder2.build();
         let value = &other.trace(ts::SOME);
         // Act.
         let result = test_panic(|| target.trace_on(value));
         // Assert.
         assert!(result.is_panic());
     }
+}
+
+#[test]
+fn clone() {
+    let builder = &mut ts::TracerBuilder::new_normal();
+    let target = &builder.build();
+    let result = target.clone();
+    assert_eq!(&result, target);
 }

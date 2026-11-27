@@ -20,6 +20,55 @@ fn new_bomb() {
 }
 
 #[test]
+fn new_auto_bomb() {
+    let result = TraceVal::new_auto_bomb(ts::SOME, true);
+    assert!(TraceVal::is_auto_bomb(&result));
+    mem::forget(result);
+}
+
+#[test]
+fn with_bomb() {
+    when_false();
+    when_true();
+
+    fn when_false() {
+        let target = TraceVal::new(ts::SOME);
+        let result = TraceVal::with_bomb(target, false);
+        assert_eq!(result, TraceVal::new(ts::SOME));
+    }
+
+    fn when_true() {
+        let target = TraceVal::new(ts::SOME);
+        let result = TraceVal::with_bomb(target, true);
+        assert!(TraceVal::is_bomb(&result));
+        assert_eq!(*result, ts::SOME);
+        assert_eq!(TraceVal::tag(&result).for_clone(), false);
+    }
+}
+
+#[test]
+fn with_auto_bomb() {
+    when_false();
+    when_true();
+
+    fn when_false() {
+        let target = TraceVal::new(ts::SOME);
+        let result = TraceVal::with_auto_bomb(target, false);
+        assert!(!TraceVal::is_auto_bomb(&result));
+        assert_eq!(result, TraceVal::new(ts::SOME));
+    }
+
+    fn when_true() {
+        let target = TraceVal::new(ts::SOME);
+        let result = TraceVal::with_auto_bomb(target, true);
+        assert!(TraceVal::is_auto_bomb(&result));
+        assert_eq!(*result, ts::SOME);
+        assert_eq!(TraceVal::tag(&result).for_clone(), false);
+        mem::forget(result);
+    }
+}
+
+#[test]
 fn is_bomb() {
     let target = TraceVal::new_bomb(ts::SOME, true);
     let result = TraceVal::is_bomb(&target);
@@ -27,10 +76,48 @@ fn is_bomb() {
 }
 
 #[test]
+fn is_auto_bomb() {
+    let target = TraceVal::new_auto_bomb(ts::SOME, true);
+    let result = TraceVal::is_auto_bomb(&target);
+    assert!(result);
+    mem::forget(target);
+}
+
+#[test]
 fn set_bomb() {
-    let target = &TraceVal::new(ts::SOME);
-    TraceVal::set_bomb(target, true);
-    assert!(TraceVal::is_bomb(&target));
+    when_false();
+    when_true();
+
+    fn when_false() {
+        let target = &TraceVal::new(ts::SOME);
+        TraceVal::set_bomb(target, false);
+        assert!(!TraceVal::is_bomb(&target));
+    }
+
+    fn when_true() {
+        let target = &TraceVal::new(ts::SOME);
+        TraceVal::set_bomb(target, true);
+        assert!(TraceVal::is_bomb(&target));
+    }
+}
+
+#[test]
+fn set_auto_bomb() {
+    when_false();
+    when_true();
+
+    fn when_false() {
+        let target = &TraceVal::new(ts::SOME);
+        TraceVal::set_auto_bomb(target, false);
+        assert!(!TraceVal::is_auto_bomb(&target));
+    }
+
+    fn when_true() {
+        let target = TraceVal::new(ts::SOME);
+        TraceVal::set_auto_bomb(&target, true);
+        assert!(TraceVal::is_auto_bomb(&target));
+        mem::forget(target);
+    }
 }
 
 #[test]
@@ -56,6 +143,12 @@ fn tracer() {
     let result = TraceVal::tracer(target);
     // Assert.
     assert_eq!(result.as_ref(), Some(tracer));
+}
+
+#[test]
+fn default() {
+    let result = TraceVal::<ts::Val>::default();
+    assert_eq!(result, Default::default());
 }
 
 #[test]
@@ -130,6 +223,7 @@ fn drop() {
     when_reading_tracer();
     when_double_drop();
     when_bomb();
+    when_auto_bomb();
 
     fn when_normal() {
         // Arrange.
@@ -158,7 +252,7 @@ fn drop() {
     fn when_double_drop() {
         // Arrange.
         let builder = &mut ts::TracerBuilder::new_normal();
-        let target = builder.take();
+        let target = builder.build();
         let mut val = target.trace(ts::SOME);
         unsafe { ptr::drop_in_place((&mut val) as *mut _) }
         // Act.
@@ -180,6 +274,15 @@ fn drop() {
         assert_eq!(states.get(&tag), Some(false));
         assert_eq!(tracer.logs()[0].is_alloc(), true);
         assert_eq!(tracer.logs()[1].is_alloc(), false);
+    }
+
+    fn when_auto_bomb() {
+        // Arrange.
+        let target = TraceVal::with_auto_bomb(TraceVal::new(ts::SOME), true);
+        // Act.
+        let result = test_panic(|| mem::drop(target));
+        // Assert.
+        assert!(result.is_panic());
     }
 }
 

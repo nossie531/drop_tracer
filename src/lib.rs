@@ -123,5 +123,7 @@ pub use drop_tracer::*;
 
 pub(crate) mod msg;
 pub(crate) mod util;
+pub(crate) use bomb_mode::*;
 
 mod drop_tracer;
+mod bomb_mode;

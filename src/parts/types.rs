@@ -1,6 +1,6 @@
 //! Types.
 
-use crate::drop_tracer::DropTracerBody;
+use crate::drop_tracer::*;
 use parking_lot::RwLock;
 use std::sync::{Arc, Weak};
 

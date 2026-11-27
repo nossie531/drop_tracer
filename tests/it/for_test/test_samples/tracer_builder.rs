@@ -125,7 +125,7 @@ impl TracerBuilder {
         &self.expected_states
     }
 
-    pub fn take(&mut self) -> DropTracer {
+    pub fn build(&mut self) -> DropTracer {
         self.target.take().unwrap()
     }
 

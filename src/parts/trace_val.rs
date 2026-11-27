@@ -28,14 +28,17 @@ use std::thread;
 ///
 /// # Bomb panic
 ///
-/// Bomb panics are occured if the the value is traced and bomb flag is set.
-/// (see ["Tracing"](#Tracing) about tracing rule).
+/// Value has following three bomb modes.
+///
+/// - None: No panic when dropped.
+/// - Auto: Always panic when dropped (Easy setting).
+/// - Normal: Only panic when traced and dropped (Easy releasing).
 #[derive(Debug, Default)]
 pub struct TraceVal<T> {
     /// Wrapped value.
     value: T,
     /// Bomb flag.
-    bomb: RwLock<bool>,
+    bomb: RwLock<BombMode>,
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
@@ -57,7 +60,7 @@ impl<T> TraceVal<T> {
     pub fn new(value: T) -> Self {
         Self {
             value,
-            bomb: RwLock::new(false),
+            bomb: RwLock::new(BombMode::None),
             tag: TraceTag::new(),
             tracer: AsNormal::new(RwLock::new(None)),
         }
@@ -78,7 +81,23 @@ impl<T> TraceVal<T> {
         Self::with_bomb(Self::new(value), bomb)
     }
 
-    /// Creates a new instance with the given bomb flag.
+    /// Creates a new bomb instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let val = TraceVal::new_auto_bomb("sample", true);
+    /// assert!(TraceVal::is_auto_bomb(&val));
+    /// std::mem::forget(val);
+    /// ```
+    #[must_use]
+    pub fn new_auto_bomb(value: T, bomb: bool) -> Self {
+        Self::with_auto_bomb(Self::new(value), bomb)
+    }
+
+    /// Creates a new instance with bomb flag.
     ///
     /// # Examples
     ///
@@ -91,7 +110,27 @@ impl<T> TraceVal<T> {
     /// ```
     #[must_use]
     pub fn with_bomb(mut this: Self, value: bool) -> Self {
-        this.bomb = RwLock::new(value);
+        let mode = if value { BombMode::Normal } else { BombMode::None };
+        this.bomb = RwLock::new(mode);
+        this
+    }
+
+    /// Creates a new instance with auto bomb flag.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let val = TraceVal::new("sample");
+    /// let val = TraceVal::with_auto_bomb(val, true);
+    /// assert!(TraceVal::is_auto_bomb(&val));
+    /// std::mem::forget(val);
+    /// ```
+    #[must_use]
+    pub fn with_auto_bomb(mut this: Self, value: bool) -> Self {
+        let mode = if value { BombMode::Auto } else { BombMode::None };
+        this.bomb = RwLock::new(mode);
         this
     }
 
@@ -107,7 +146,23 @@ impl<T> TraceVal<T> {
     /// ```
     #[must_use]
     pub fn is_bomb(this: &Self) -> bool {
-        *this.bomb.read()
+        this.bomb.read().is_bomb()
+    }
+
+    /// Returns `true` if this is auto bomb.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let val = TraceVal::new_auto_bomb("sample", true);
+    /// assert!(TraceVal::is_auto_bomb(&val));
+    /// std::mem::forget(val);
+    /// ```
+    #[must_use]
+    pub fn is_auto_bomb(this: &Self) -> bool {
+        this.bomb.read().is_auto_bomb()
     }
 
     /// Sets the bomb flag.
@@ -122,7 +177,25 @@ impl<T> TraceVal<T> {
     /// assert!(TraceVal::is_bomb(&val));
     /// ```
     pub fn set_bomb(this: &Self, value: bool) {
-        *this.bomb.write() = value;
+        let mode = if value { BombMode::Normal } else { BombMode::None };
+        *this.bomb.write() = mode;
+    }
+
+    /// Sets the auto bomb flag.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use drop_tracer::prelude::*;
+    ///
+    /// let val = TraceVal::new("sample");
+    /// TraceVal::set_bomb(&val, true);
+    /// assert!(TraceVal::is_bomb(&val));
+    /// std::mem::forget(val);
+    /// ```
+    pub fn set_auto_bomb(this: &Self, value: bool) {
+        let mode = if value { BombMode::Auto } else { BombMode::None };
+        *this.bomb.write() = mode;
     }
 
     /// Returns trace tag.
@@ -256,7 +329,7 @@ impl<T> Drop for TraceVal<T> {
             error.panic();
         }
 
-        if *self.bomb.read() && Self::tracer(self).is_some() {
+        if self.bomb.read().is_explodes(Self::tracer(self).is_some()) {
             panic!("{}", msg::BOMB_EXPLODED);
         }
     }

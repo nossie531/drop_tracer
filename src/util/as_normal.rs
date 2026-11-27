@@ -1,6 +1,6 @@
 //! Provider of [`AsNormal`].
 
-use std::ops::{Deref, DerefMut};
+use std::ops::Deref;
 use std::panic::AssertUnwindSafe;
 
 /// A wrapper that asserts normal behavior.
@@ -42,27 +42,5 @@ impl<T> Deref for AsNormal<T> {
 
     fn deref(&self) -> &Self::Target {
         &self.0
-    }
-}
-
-impl<T> DerefMut for AsNormal<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T> Eq for AsNormal<T>
-where
-    T: Eq,
-{
-    // nop.
-}
-
-impl<T> PartialEq for AsNormal<T>
-where
-    T: PartialEq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.0.eq(&other.0)
     }
 }
