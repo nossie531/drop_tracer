@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+No items.
+
+## [0.9.0] - 2026-11-28
+
 ### Added
 
 - `TraceVal::new_auto_bomb`
@@ -122,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - First release.
 
-[Unreleased]: https://github.com/nossie531/drop_tracer/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/nossie531/drop_tracer/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/nossie531/drop_tracer/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/nossie531/drop_tracer/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/nossie531/drop_tracer/compare/v0.6.1...v0.7.0
 [0.6.1]: https://github.com/nossie531/drop_tracer/compare/v0.6.0...v0.6.1
