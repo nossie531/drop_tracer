@@ -38,7 +38,7 @@ pub struct TraceVal<T> {
     /// Wrapped value.
     value: T,
     /// Bomb flag.
-    bomb: RwLock<BombMode>,
+    bomb: AsNormal<RwLock<BombMode>>,
     /// Trace tag.
     tag: TraceTag,
     /// Tracer body.
@@ -60,7 +60,7 @@ impl<T> TraceVal<T> {
     pub fn new(value: T) -> Self {
         Self {
             value,
-            bomb: RwLock::new(BombMode::None),
+            bomb: AsNormal::new(RwLock::new(BombMode::None)),
             tag: TraceTag::new(),
             tracer: AsNormal::new(RwLock::new(None)),
         }
@@ -111,7 +111,7 @@ impl<T> TraceVal<T> {
     #[must_use]
     pub fn with_bomb(mut this: Self, value: bool) -> Self {
         let mode = if value { BombMode::Normal } else { BombMode::None };
-        this.bomb = RwLock::new(mode);
+        this.bomb = AsNormal::new(RwLock::new(mode));
         this
     }
 
@@ -130,7 +130,7 @@ impl<T> TraceVal<T> {
     #[must_use]
     pub fn with_auto_bomb(mut this: Self, value: bool) -> Self {
         let mode = if value { BombMode::Auto } else { BombMode::None };
-        this.bomb = RwLock::new(mode);
+        this.bomb = AsNormal::new(RwLock::new(mode));
         this
     }
 
@@ -284,7 +284,7 @@ where
 
         let ret = Self {
             value: self.value.clone(),
-            bomb: RwLock::new(*self.bomb.read()),
+            bomb: AsNormal::new(RwLock::new(*self.bomb.read())),
             tag: TraceTag::new_for_clone(),
             tracer: AsNormal::new(RwLock::new(tracer)),
         };
