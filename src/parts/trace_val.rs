@@ -305,7 +305,7 @@ impl<T> Drop for TraceVal<T> {
     ///
     /// Panics in the following cases.
     ///
-    /// - Bomb flag and tracer is setted.
+    /// - Bomb panic occured.
     /// - Related tracer is borrowed already.
     /// - Double drop is detected.
     ///
